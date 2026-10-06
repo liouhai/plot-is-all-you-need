@@ -1,0 +1,11 @@
+feature,full_name,importance
+age,Age,0.0599
+sex,Sex,0.0118
+bmi,Body mass index,0.2828
+bp,Mean blood pressure,0.0948
+s1,Total serum cholesterol,0.0465
+s2,LDL cholesterol,0.057
+s3,HDL cholesterol,0.0512
+s4,Cholesterol / HDL ratio,0.0234
+s5,Log serum triglycerides,0.3019
+s6,Blood glucose,0.0707

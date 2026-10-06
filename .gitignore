@@ -1,0 +1,11 @@
+# 只在本机的内容：自己收集但不想公开的图、品味记录
+gallery-local/
+taste.md
+_archive/
+
+# 可由脚本重新生成
+.cache.npz
+__pycache__/
+figures/
+gallery/*.pdf
+.DS_Store
