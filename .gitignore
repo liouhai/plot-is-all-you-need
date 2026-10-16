@@ -1,0 +1,17 @@
+# 只在本机的内容：自己收集但不想公开的图、品味记录
+gallery-local/
+taste.md
+gallery/cards-only/
+_archive/
+
+# 可由脚本重新生成
+.cache.npz
+__pycache__/
+figures/
+gallery/*.pdf
+.DS_Store
+
+# 收图工具的运行环境和输出（含登录信息），绝对不要提交
+tools/douyin-archive/.venv/
+tools/douyin-archive/douyin_archive/
+tools/douyin-archive/demo/works/
