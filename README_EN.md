@@ -32,6 +32,27 @@ The public gallery `gallery/` currently holds **95 figures**: 14 drawn in this r
   Every round contains both figures close to your past taste and figures the agent recommends for this audience, each labelled as such.
 - Once you have chosen, the agent produces the final PNG, PDF and plotting script, then shows the result next to the example for you to check.
 
+## Usage
+
+The `plot` suite helps you choose a chart and plot your own data. Give the agent your data file or a reference figure:
+
+```text
+/plot-is-all-you-need:plot Plot this data and show me a few chart options to choose from
+```
+
+The agent suggests chart options based on your data and purpose, refines the one you choose, then shows the result alongside the reference for review.
+
+The `collect` suite collects figure references from Douyin posts or profiles. Give the agent a link:
+
+```text
+/plot-is-all-you-need:collect Collect figures from "<post or profile URL>" for my reference gallery
+```
+
+The agent downloads the posts, extracts frames, and filters the results. It reviews unreliable segments, keeps figures it can extract easily, and discards those it cannot recover reliably.
+Selected images go into the local `gallery-local/` by default, with appreciation cards for use when plotting.
+
+For detailed usage, dependencies, and script commands, see [Downloading, frame extraction, and agent collection](tools/douyin-archive/README.md) (in Chinese).
+
 ## Four stages
 
 | | |

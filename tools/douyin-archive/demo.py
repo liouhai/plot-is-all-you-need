@@ -8,14 +8,15 @@ and writes demo/demo.png: the timeline of the video on top, the recovered stills
 Needs FFmpeg and Pillow.
 """
 import random
-import shutil
+import argparse
+import tempfile
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-import douyin_archive as archive
+import extract as archive
 
-OUT = Path(__file__).resolve().parent / "demo"
+OUT = None
 W, H, FPS, THRESHOLD = 540, 720, 30, 0.02
 PASTEL = ["#f6d6d6", "#fde2c8", "#fff3c4", "#d9f0d3", "#cdeaf2", "#d6dcf7", "#ead7f5", "#f4d4e6"]
 INK = ["#d1495b", "#edae49", "#00798c", "#30638e", "#6a4c93", "#2a9d8f"]
@@ -50,25 +51,24 @@ def build_video(rng):
     order = list(range(24)) + [4]                                # slide 05 flashes by again at the end
     lengths = [rng.choice((3, 4, 5, 6, 8)) for _ in order]
     lengths[7], lengths[16] = 1, 1                               # two slides are on screen for a single frame
-    frames = OUT / "frames"
-    frames.mkdir(parents=True)
     segments, n = [], 0
-    for index, length in zip(order, lengths):
-        segments.append((index + 1, n, length))
-        for _ in range(length):
-            n += 1
-            slides[index].save(frames / f"{n:05d}.png")
     video = OUT / "works" / "demo" / "video.mp4"
     video.parent.mkdir(parents=True)
-    archive.run_ffmpeg(["-framerate", FPS, "-i", frames / "%05d.png", "-c:v", "libx264", "-crf", "14", "-pix_fmt", "yuv420p", video])
-    shutil.rmtree(frames)
+    with tempfile.TemporaryDirectory(prefix="demo-frames-", dir=OUT) as temporary:
+        frames = Path(temporary)
+        for index, length in zip(order, lengths):
+            segments.append((index + 1, n, length))
+            for _ in range(length):
+                n += 1
+                slides[index].save(frames / f"{n:05d}.png")
+        archive.run_ffmpeg(["-framerate", FPS, "-i", frames / "%05d.png", "-c:v", "libx264", "-crf", "14", "-pix_fmt", "yuv420p", video])
     archive.save_json(video.parent / "source.json", {"id": "demo", "kind": "video", "files": ["works/demo/video.mp4"]})
     return segments, video
 
 
 def figure(segments, picked, counts):
     """Timeline of the flash video above the stills that came out of it."""
-    stills = sorted((OUT / "works" / "demo" / "images").glob("*.png"))
+    stills = sorted((OUT / "works" / "demo" / "extraction" / "images").glob("*.png"))
     cols, tw, th, pad = 9, 150, 200, 14
     rows = -(-len(stills) // cols)
     width = pad + cols * (tw + pad)
@@ -100,17 +100,37 @@ def figure(segments, picked, counts):
 
 
 if __name__ == "__main__":
-    shutil.rmtree(OUT, ignore_errors=True)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, help="新的演示目录；默认在 douyin_archive/ 下创建独立目录")
+    args = parser.parse_args()
+    base = Path(__file__).resolve().parent / "douyin_archive"
+    base.mkdir(parents=True, exist_ok=True)
+    OUT = args.output.resolve() if args.output else Path(tempfile.mkdtemp(prefix="demo-", dir=base))
+    OUT.mkdir(parents=True, exist_ok=True)
+    if any(OUT.iterdir()):
+        raise SystemExit("演示输出目录必须为空，保留已有内容")
     rng = random.Random(3)
     segments, video = build_video(rng)
-    archive.ROOT = OUT                                            # run the real extraction on the made-up video
     data = archive.metrics(video)
     counts = {t: len(archive.select_frames(data, t)) for t in archive.THRESHOLDS}
-    result = archive.extract_work("demo", THRESHOLD)
+    destination = video.parent / "extraction"
+    result = archive.extract_video(video, destination, THRESHOLD)
+    automatic = result["count"]
+    reviewed = 0
+    # This deterministic fixture approves known complete synthetic slides; it does not simulate a model's judgement.
+    for segment in result["segments"]:
+        if segment["status"] != "pending":
+            continue
+        bundle = destination / segment["bundle"]
+        candidates = archive.load_json(bundle / "segment.json")["candidates"]
+        chosen = min(candidates, key=lambda item: abs(item["frame"] - segment["frame"]))
+        result = archive.apply_review(destination, segment["id"], [bundle / chosen["image"]],
+                                      note="合成演示夹具：此帧对应一张已知完整的示例图")
+        reviewed += 1
     picked = archive.select_frames(data, THRESHOLD)
     figure(segments, picked, counts)
     # every segment must yield exactly one still, taken from inside that segment
     assert result["count"] == len(segments), (result["count"], len(segments))
     assert all(start <= row["frame"] < start + length for row, (_, start, length) in zip(picked, segments))
-    print(f"{len(segments)} segments -> {result['count']} stills; by threshold: {counts}")
+    print(f"{len(segments)} segments -> {result['count']} stills (auto={automatic}, reviewed={reviewed}); by threshold: {counts}")
     print(OUT / "demo.png")

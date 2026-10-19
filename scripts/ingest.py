@@ -126,6 +126,8 @@ def add_palette(card, colours):
     if not colours or not card.exists():
         return
     meta, body = cards.read(card)
+    if meta.get("edited"):
+        return
     if not any(same_palette(colours, p) for p in meta.get("palettes", [])):
         meta.setdefault("palettes", []).append(colours)
         cards.write(card, meta, body)
@@ -141,8 +143,10 @@ def register(src, gallery, dedup=True):
         dest = src
     elif dest.exists():
         return "exists", ident, None
-    im = Image.open(src)
+    with Image.open(src) as original:
+        im = original.convert("RGB")
     a, ink, box = _content(im)
+    quality = low_quality(im, box)
     sig, colours = signature(a), palette(a, ink)
     maybe = None
     if dedup:
@@ -157,13 +161,12 @@ def register(src, gallery, dedup=True):
             if sim[k] >= MAYBE:
                 maybe = ids[k]
     if not in_place:
-        im = im.convert("RGB")
         im.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
         im.save(dest, optimize=True)
     card = dest.with_suffix(".md")
     if not card.exists():
         cards.write(card, {"title": "", "kind": "", "purpose": [], "data": "", "loudness": "", "caveat": "",
-                           "low_quality": low_quality(Image.open(src), box), "code": "",
+                           "low_quality": quality, "code": "",
                            "appreciated": False, "edited": False, "palettes": [colours] if colours else []})
     return "added", ident, maybe
 

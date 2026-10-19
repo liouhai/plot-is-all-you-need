@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "plot-is-all-you-need",
+  "version": "1.2.0",
+  "description": "共用图库的科研绘图 plot 与参考图收集 collect 套件。",
+  "author": {"name": "liou_hai"},
+  "repository": "https://github.com/liouhai/plot-is-all-you-need",
+  "license": "MIT"
+}

@@ -13,5 +13,5 @@ gallery/*.pdf
 
 # 收图工具的运行环境和输出（含登录信息），绝对不要提交
 tools/douyin-archive/.venv/
-tools/douyin-archive/douyin_archive/
+douyin_archive/
 tools/douyin-archive/demo/works/

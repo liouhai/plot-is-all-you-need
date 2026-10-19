@@ -1,0 +1,8 @@
+{
+  "name": "plot-is-all-you-need",
+  "version": "1.2.0",
+  "description": "看图选图、照图画图的 plot 套件，以及下载、拆图、由 agent 判断后入库的 collect 套件。",
+  "author": {"name": "liou_hai"},
+  "repository": "https://github.com/liouhai/plot-is-all-you-need",
+  "license": "MIT"
+}
